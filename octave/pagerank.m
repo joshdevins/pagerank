@@ -1,9 +1,19 @@
-
 % based on code from Wikipedia: http://en.wikipedia.org/wiki/PageRank
-function [v] = pagerank(A, alpha, priors, previous_v, v_quadratic_error_threshold)
+
+% uniform priors, no prior solution
+function [v] = pagerank(A, alpha, v_quadratic_error_threshold)
+
+n = size(A, 2); % number of nodes in the graph 
+uniform_priors = % TODO
+for i = 1:n, x(i) = 1 / n; end
+
+pagerank(A, alpha, uniform_prior, starting_v, v_quadratic_error_threshold)
+endfunction
+
+function [v] = pagerank(A, alpha, priors, v, v_quadratic_error_threshold)
 
 % scalars
-n = size(M, 2); % number of nodes in the graph
+n = size(A, 2); % number of nodes in the graph
 
 % matrices
 M = norm(A, 1); % L1 norm
@@ -13,10 +23,10 @@ P = M.';
 % build dangling nodes vector, where entry is 1 when node is dangling, 0 otherwise
 d = max(P, [], 1); % dangling nodes will be 0 here, others will be non-0
 for i = 0:n
-  if (d (i) == 0)
-    d (i) = 1;
+  if (d(i) == 0)
+    d(i) = 1;
   else
-    d (i) = 0;
+    d(i) = 0;
   endif
 endfor
 
