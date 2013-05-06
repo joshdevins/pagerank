@@ -2,48 +2,132 @@
 %% PageRank
 %%
 
-% PageRank with uniform priors and no previous solution
-function [v, num_iters] = unbiased_pagerank(A, alpha, v_quadratic_error_threshold, max_iters)
+% common setup with unbiased priors, no starting solution
+function [n, priors, v] = setup_pagerank(A)
 
-  n = size(A, 1); % number of nodes in the graph
-  s = ones(n, 1) / n;
+  % matrix size/number of nodes -- assumes a square matrix already
+  n = size(A, 1);
 
-  % uniform prior: 1/n
-  % uniform starting solution: 1/n
-  % both are the same so just use s for both
-
-  [v, num_iters] = pagerank(A, alpha, s, s, v_quadratic_error_threshold, max_iters);
+  unbiased = ones(n, 1) / n;
+  priors = unbiased; % unbiased priors
+  v = unbiased;      % no starting solution
 endfunction
 
-% PageRank with specific priors vector and a previous solution
-function [v, num_iters] = pagerank(A, alpha, priors, v, v_quadratic_error_threshold, max_iters)
+% iteratove PageRank via power method
+function [v, num_iters] = naive_pagerank_core(P, alpha, priors, v, error_threshold, max_iters)
+  % iterate
+  % use L2 norm of diff between solution vectors to check for stopping criteria
+  for num_iters = 1:max_iters
+    last_v = v;
+    v = ((1 - alpha) * P * v) + (alpha * priors);
 
-  % scalars
-  n = size(A, 1); % number of nodes in the graph
+    if norm(v - last_v, 2) < error_threshold
+      return;
+    end
+  end
+endfunction
 
-  % matrices
-  sum_vector = sum(A, 2); % col vector with values are sum of rows
+% PageRank: naïve
+function [v, num_iters] = naive_pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
 
+  % L1 row normalize
   % use eps to ensure dangling rows don't kill this
-  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * A; % L1 row normalised
+  sum_vector = sum(A, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * A;
   P = M';
 
-  % vectors
-  d = sum_vector < eps; % dangling nodes vector where d(i) is 1 for dangling node
-  p = alpha * priors;
+  [v, num_iters] = naive_pagerank_core(P, alpha, priors, v, error_threshold, max_iters);
+endfunction
 
-  % derived constants
-  P_hat = (1 - alpha) * (P - diag((1 / n - 1) * d));
+% PageRank: dangling
+function [v, num_iters] = dangling_pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
+
+  % build dangling nodes matrix where d(ij) is 1 for dangling node i (row)
+  d = sum(A, 2) < eps;
+  D = (spdiags(d / n, 0, n, n) * ones(n, n));
+
+  % L1 row normalize
+  % use eps to ensure dangling rows don't kill this
+  B = A + D;
+  sum_vector = sum(B, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * B;
+  P = M';
+
+  [v, num_iters] = naive_pagerank_core(P, alpha, priors, v, error_threshold, max_iters);
+endfunction
+
+% PageRank: dangling, no self-references
+function [v, num_iters] = dangling_selfless_pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
+
+  % build dangling nodes matrix where d(ij) is 1 for dangling node i (row)
+  d = sum(A, 2) < eps;
+  D = (spdiags(d, 0, n, n) * ones(n, n) - diag(d));
+
+  % L1 row normalize
+  % use eps to ensure dangling rows don't kill this
+  B = A + D;
+  sum_vector = sum(B, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * B;
+  P = M';
+
+  [v, num_iters] = naive_pagerank_core(P, alpha, priors, v, error_threshold, max_iters);
+endfunction
+
+% PageRank: dangling, optimized, unbiased
+function [v, num_iters] = pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
+
+  % L1 row normalize
+  % use eps to ensure dangling rows don't kill this
+  sum_vector = sum(A, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * A;
+  P = M';
+
+  % build dangling nodes vector where d(i) is 1 for dangling node
+  d = sum_vector < eps;
+
+  % build constants
+  a = alpha * priors;
+  P_dot = (1 - alpha) * (P - diag((1 / (n - 1)) * d));
 
   % iterate
   % use L2 norm of diff between solution vectors to check for stopping criteria
   for num_iters = 1:max_iters
     last_v = v;
     mu = ((1 - alpha) / (n - 1)) * (d' * last_v);
-    v = (P_hat * last_v) + mu + p;
+    v = (P_dot * last_v) + mu + a;
 
-    if norm(v - last_v, 2) < v_quadratic_error_threshold
+    if norm(v - last_v, 2) < error_threshold
       return;
     end
   end
 endfunction
+
+without_dangle = [
+    0.0 0.0 0.0 0.0 1.0 ;
+    0.5 0.0 0.0 0.0 0.0 ;
+    0.5 0.0 0.0 0.0 0.0 ;
+    0.0 1.0 0.5 0.0 0.0 ;
+    0.0 0.0 0.5 1.0 0.0 ;
+  ];
+
+with_dangle = [
+    0.0 0.0 0.0 0.0 0.0 ; % dangling
+    0.5 0.0 0.0 0.0 0.0 ;
+    0.5 0.0 0.0 0.0 0.0 ;
+    0.0 1.0 0.5 0.0 0.0 ;
+    0.0 0.0 0.5 1.0 0.0 ;
+  ];
+
+[v, num_iters] = naive_pagerank            (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = dangling_pagerank         (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = dangling_selfless_pagerank(without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = pagerank                  (without_dangle, 0.15, 0.001, 100)
+
+[v, num_iters] = naive_pagerank            (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = dangling_pagerank         (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = dangling_selfless_pagerank(with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = pagerank                  (with_dangle,    0.15, 0.001, 100)
