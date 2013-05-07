@@ -92,13 +92,13 @@ function [v, num_iters] = pagerank(A, alpha, error_threshold, max_iters)
   % build constants
   a = alpha * priors;
   P_dot = (1 - alpha) * (P - diag((1 / (n - 1)) * d));
+  mu = ((1 - alpha) / (n - 1)) * d';
 
   % iterate
   % use L2 norm of diff between solution vectors to check for stopping criteria
   for num_iters = 1:max_iters
     last_v = v;
-    mu = ((1 - alpha) / (n - 1)) * (d' * last_v);
-    v = (P_dot * last_v) + mu + a;
+    v = (P_dot * last_v) + (mu * last_v) + a;
 
     if norm(v - last_v, 2) < error_threshold
       return;
