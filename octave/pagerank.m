@@ -106,6 +106,64 @@ function [v, num_iters] = pagerank(A, alpha, error_threshold, max_iters)
   end
 endfunction
 
+% PageRank: alternative dangling, optimized, unbiased
+function [v, num_iters] = alt_dangling_pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
+
+  % L1 row normalize
+  % use eps to ensure dangling rows don't kill this
+  sum_vector = sum(A, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * A;
+  P = M';
+
+  % build dangling nodes vector where d(i) is 1 for dangling node
+  dangling = sum_vector < eps;
+  not_dangling = sum_vector > eps;
+
+  % iterate
+  % use L2 norm of diff between solution vectors to check for stopping criteria
+  for num_iters = 1:max_iters
+    last_v = v;
+    v = ((1 - alpha) * P * v) + (alpha * priors);
+    beta = (1.0 - sum(v)) / n;
+    v = v + beta;
+
+    if norm(v - last_v, 2) < error_threshold
+      return;
+    end
+  end
+endfunction
+
+% PageRank: selfless, alternative dangling, optimized, unbiased
+function [v, num_iters] = alt_dangling_selfless_pagerank(A, alpha, error_threshold, max_iters)
+  [n, priors, v] = setup_pagerank(A);
+
+  % L1 row normalize
+  % use eps to ensure dangling rows don't kill this
+  sum_vector = sum(A, 2); % col vector where values are sum of rows
+  M = spdiags(1 ./ (eps + sum_vector), 0, n, n) * A;
+  P = M';
+
+  % build dangling nodes vector where d(i) is 1 for dangling node
+  dangling = sum_vector < eps;
+  not_dangling = sum_vector > eps;
+
+  P_dot = P - diag((1 / (n - 1)) * dangling);
+
+  % iterate
+  % use L2 norm of diff between solution vectors to check for stopping criteria
+  for num_iters = 1:max_iters
+    last_v = v;
+    v = ((1 - alpha) * P_dot * v) + (alpha * priors);
+    beta = (1.0 - sum(v)) / n;
+    v = v + beta;
+
+    if norm(v - last_v, 2) < error_threshold
+      return;
+    end
+  end
+endfunction
+
 without_dangle = [
     0.0 0.0 0.0 0.0 1.0 ;
     0.5 0.0 0.0 0.0 0.0 ;
@@ -122,12 +180,16 @@ with_dangle = [
     0.0 0.0 0.5 1.0 0.0 ;
   ];
 
-[v, num_iters] = naive_pagerank            (without_dangle, 0.15, 0.001, 100)
-[v, num_iters] = dangling_pagerank         (without_dangle, 0.15, 0.001, 100)
-[v, num_iters] = dangling_selfless_pagerank(without_dangle, 0.15, 0.001, 100)
-[v, num_iters] = pagerank                  (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = naive_pagerank                (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = dangling_pagerank             (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = dangling_selfless_pagerank    (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = pagerank                      (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = alt_dangling_pagerank         (without_dangle, 0.15, 0.001, 100)
+[v, num_iters] = alt_dangling_selfless_pagerank(without_dangle, 0.15, 0.001, 100)
 
-[v, num_iters] = naive_pagerank            (with_dangle,    0.15, 0.001, 100)
-[v, num_iters] = dangling_pagerank         (with_dangle,    0.15, 0.001, 100)
-[v, num_iters] = dangling_selfless_pagerank(with_dangle,    0.15, 0.001, 100)
-[v, num_iters] = pagerank                  (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = naive_pagerank                (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = dangling_pagerank             (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = dangling_selfless_pagerank    (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = pagerank                      (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = alt_dangling_pagerank         (with_dangle,    0.15, 0.001, 100)
+[v, num_iters] = alt_dangling_selfless_pagerank(with_dangle,    0.15, 0.001, 100)
