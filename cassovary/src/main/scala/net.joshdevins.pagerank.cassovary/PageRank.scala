@@ -1,14 +1,27 @@
 package net.joshdevins.pagerank.cassovary
 
-import com.twitter.cassovary.graph.{DirectedGraph, GraphDir}
+import com.twitter.cassovary.graph.{DirectedGraph, GraphDir, Node}
 import com.twitter.cassovary.util.Progress
 import net.lag.logging.Logger
+
+import PageRank._
 
 final class PageRank(graph: DirectedGraph, params: PageRankParams) {
 
   private val log = Logger.get("PageRank")
 
-  val perNodeAlpha = params.alpha / graph.nodeCount
+  val perNodeAlpha = params.alpha / graph.nodeCount // assumes a uniform prior
+  val numDanglingNodes = {
+    // count number of dangling nodes in the graph (no out edges)
+    var count = 0
+    graph.foreach { node =>
+      if (isDanglingNode(node))
+        count += 1
+    }
+    count
+  }
+  log.info("number of nodes: " + graph.nodeCount)
+  log.info("number of dangling nodes: " + numDanglingNodes)
 
   def run: Array[Double] = {
 
@@ -20,7 +33,7 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
 
     // initialize PageRank to some "random" values
     log.info("Initializing PageRank run")
-    val progress = Progress("pagerank_init", 65536, Some(graph.nodeCount))
+    val progress = buildProgress("init")
     val initialPageRankValue = 1.0d / graph.nodeCount
 
     graph.foreach { node =>
@@ -48,7 +61,7 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
     val afterIterationValues = new Array[Double](graph.maxNodeId + 1)
 
     log.info("Calculate PageRank on nodes")
-    val calcProgress = Progress("pagerank_iter_calc", 65536, Some(graph.nodeCount))
+    val calcProgress = buildProgress("iter_calc")
     graph.foreach { node =>
       val givenPageRank = beforeIterationValues(node.id) / node.neighborCount(GraphDir.OutDir)
       node.neighborIds(GraphDir.OutDir).foreach { neighborId =>
@@ -59,8 +72,8 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
     }
 
     log.info("Apply teleport probability")
-    val teleportProgress = Progress("pagerank_iter_teleport", 65536, Some(graph.nodeCount))
-    if (params.alpha > 0) {
+    val teleportProgress = buildProgress("iter_teleport")
+    if (params.alpha > 0.0) {
       graph.foreach { node =>
         afterIterationValues(node.id) = perNodeAlpha + ((1.0 - params.alpha) * afterIterationValues(node.id))
 
@@ -68,9 +81,25 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
       }
     }
 
+    log.info("Distribute dangling node mass")
+    val danglingProgress = buildProgress("iter_dangle")
+    if (numDanglingNodes > 0) {
+      val remainingMass = 1.0 - afterIterationValues.sum
+      val perNodeRemainingMass = remainingMass / (graph.nodeCount - numDanglingNodes)
+      graph.foreach { node =>
+        if (isDanglingNode(node))
+          afterIterationValues(node.id) += perNodeRemainingMass
+      }
+    }
+
     afterIterationValues
   }
 
+  private def isDanglingNode(node: Node): Boolean =
+    node.neighborCount(GraphDir.OutDir) == 0
+
+  private def buildProgress(name: String): Progress =
+    Progress("pagerank_" + name, math.pow(2, 16).toInt, Some(graph.nodeCount))
 }
 
 /** A naive PageRank implementation. Not optimized and runs in a single thread.
