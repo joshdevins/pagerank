@@ -8,8 +8,7 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
 
   private val log = Logger.get("PageRank")
 
-  val dampingFactor = 1.0 - params.alpha
-  val dampingAmount = (1.0 - dampingFactor) / graph.nodeCount
+  val perNodeAlpha = params.alpha / graph.nodeCount
 
   def run: Array[Double] = {
 
@@ -40,8 +39,8 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
 
   /** Memory cost: creates a new array for every iteration (easily garbage collectable)
     * Computation cost:
-    *  loops through all nodes twice (propogate/calculate PageRank, apply damping)
-    *  loops through each neighbour nodes once per each node
+    *  loops through all nodes twice (propogate/calculate PageRank, apply teleport probability)
+    *  loops through each neighbour node of every node, every iteration
     */
   def iterate(beforeIterationValues: Array[Double]): Array[Double] = {
 
@@ -59,13 +58,13 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
       calcProgress.inc
     }
 
-    log.info("Damping nodes")
-    val dampingProgress = Progress("pagerank_iter_damp", 65536, Some(graph.nodeCount))
-    if (dampingAmount > 0) {
+    log.info("Apply teleport probability")
+    val teleportProgress = Progress("pagerank_iter_teleport", 65536, Some(graph.nodeCount))
+    if (params.alpha > 0) {
       graph.foreach { node =>
-        afterIterationValues(node.id) = dampingAmount + dampingFactor * afterIterationValues(node.id)
+        afterIterationValues(node.id) = perNodeAlpha + ((1.0 - params.alpha) * afterIterationValues(node.id))
 
-        dampingProgress.inc
+        teleportProgress.inc
       }
     }
 
