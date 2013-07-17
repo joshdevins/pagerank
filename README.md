@@ -17,7 +17,7 @@ An outline of the PageRank algorithm implemented will follow once I get around t
 
  * Octave/Matlab -- because everyone needs an Octave/Matlab example (although I would never do this in production)
  * Julia -- high-level, readable, open-source and wickedly fast
- * Cassovary -- awesomely fast, Scala API and Twitter use it in production so why not?!
+ * Cassovary -- awesomely fast, Scala API and Twitter use it in production (for now) so why not?!
  * GraphChi -- sharded graphs, not memory bound, easy to port to big brother GraphLab, too bad it's C++
 
 ## Distributed
