@@ -17,7 +17,7 @@ class PageRankTest extends FunSuite with ShouldMatchers {
       NodeIdEdgesWeightsMaxId(2, Array(0),    Array(1.0)),
       NodeIdEdgesWeightsMaxId(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
       NodeIdEdgesWeightsMaxId(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
-    ).iterator, StoredGraphDir.OnlyOut)
+    ).iterator)
 
   val graphWithDangle = WeightedGraph(() => Seq(
       NodeIdEdgesWeightsMaxId(0, Array(),     Array()), // dangling
@@ -25,7 +25,7 @@ class PageRankTest extends FunSuite with ShouldMatchers {
       NodeIdEdgesWeightsMaxId(2, Array(0),    Array(1.0)),
       NodeIdEdgesWeightsMaxId(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
       NodeIdEdgesWeightsMaxId(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
-    ).iterator, StoredGraphDir.OnlyOut)
+    ).iterator)
 
   test("returns a uniform array after 0 iterations") {
     val params = PageRankParams(0.9, 0)
@@ -90,7 +90,7 @@ class PageRankTest extends FunSuite with ShouldMatchers {
         val allBut = allNodes.filter(_ != source)
         NodeIdEdgesWeightsMaxId(source, allBut, Array.fill[Double](numNodes - 1)(1.0 / (numNodes - 1)), numNodes)
       }
-      WeightedGraph(() => testNodes.iterator, StoredGraphDir.OnlyOut)
+      WeightedGraph(() => testNodes.iterator)
     }
 
     val graphComplete = generateCompleteGraph(10)

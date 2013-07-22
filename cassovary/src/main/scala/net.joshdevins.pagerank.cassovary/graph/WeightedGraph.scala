@@ -47,16 +47,12 @@ object WeightedGraph {
    * 3. instantiate nodes that only have in-edges (thus has not been created in the input)
    * next steps apply only if in-edge is needed
    * 4. calculate in-edge array sizes
-   * xxx 5. (if in-edge dir only) remove out edges
-   * 6. instantiate in-edge arrays
-   * 7. iterate over the sequence of nodes again, instantiate in-edges
+   * 5. instantiate in-edge arrays
+   * 6. iterate over the sequence of nodes again, instantiate in-edges
    */
   def apply(
     iteratorSeq: Seq[() => Iterator[NodeIdEdgesWeightsMaxId]],
-    executorService: ExecutorService,
-    storedGraphDir: StoredGraphDir): WeightedGraph = {
-
-    require(storedGraphDir != StoredGraphDir.BothInOut, "This implementation does not currently support: StoredGraphDir.BothInOut")
+    executorService: ExecutorService): WeightedGraph = {
 
     log.debug("loading nodes and out edges from file in parallel")
     val futures = Stats.time("graph_dump_load_partial_nodes_and_out_edges_parallel") {
@@ -71,7 +67,7 @@ object WeightedGraph {
           iteratorFunc().foreach { item =>
             newMaxId = newMaxId.max(item.maxId)
             varNodeWithOutEdgesMaxId = varNodeWithOutEdgesMaxId.max(item.id)
-            val newNode = WeightedNode(item.id, item.edges, item.weights, storedGraphDir)
+            val newNode = WeightedNode(item.id, item.edges, item.weights)
             nodes += newNode
           }
           NodesMaxIds(nodes, newMaxId, varNodeWithOutEdgesMaxId)
@@ -107,12 +103,7 @@ object WeightedGraph {
         nodes.foreach { node =>
           table(node.id) = node
           nodeIdSet(node.id) = 1
-          storedGraphDir match {
-            case StoredGraphDir.OnlyIn =>
-              node.inboundNodes.foreach { inEdge => nodeIdSet(inEdge) = 1 }
-            case _ =>
-              node.outboundNodes.foreach { outEdge => nodeIdSet(outEdge) = 1 }
-          }
+          node.outboundNodes.foreach { outEdge => nodeIdSet(outEdge) = 1 }
         }
       }
 
@@ -123,8 +114,8 @@ object WeightedGraph {
     // also calculates the total number of edges
     val nodesWithNoOutEdges = new mutable.ArrayBuffer[Node]
     var nodeWithOutEdgesCount = 0
-    var numEdges = 0
     var numNodes = 0
+    var numEdges = 0l
 
     log.debug("creating nodes that have only in-coming edges")
     Stats.time("graph_load_creating_nodes_without_out_edges") {
@@ -132,15 +123,10 @@ object WeightedGraph {
         if (nodeIdSet(id) == 1) {
           numNodes += 1
           if (table(id) == null) {
-            table(id) = WeightedNode(id, storedGraphDir)
+            table(id) = WeightedNode(id)
           } else {
             nodeWithOutEdgesCount += 1
-            storedGraphDir match {
-              case StoredGraphDir.OnlyIn =>
-                numEdges += table(id).inboundNodes.size
-              case _ =>
-                numEdges += table(id).outboundNodes.size
-            }
+            numEdges += table(id).outboundNodes.size
           }
         }
       }
@@ -149,18 +135,14 @@ object WeightedGraph {
     new WeightedGraph(
       table,
       maxNodeId,
-      nodeWithOutEdgesMaxId,
-      nodeWithOutEdgesCount,
       numNodes,
-      numEdges,
-      storedGraphDir)
+      numEdges)
   }
 
   @VisibleForTesting
   def apply(
-    iteratorFunc: () => Iterator[NodeIdEdgesWeightsMaxId],
-    storedGraphDir: StoredGraphDir): WeightedGraph =
-    apply(Seq(iteratorFunc), MoreExecutors.sameThreadExecutor(), storedGraphDir)
+    iteratorFunc: () => Iterator[NodeIdEdgesWeightsMaxId]): WeightedGraph =
+    apply(Seq(iteratorFunc), MoreExecutors.sameThreadExecutor())
 }
 
 
@@ -170,23 +152,20 @@ object WeightedGraph {
  * nodes in an array. It also builds all edges which are also stored in array.
  *
  * @param nodes the list of nodes with edges instantiated
- * @param maxId the max node id in the graph
+ * @param _maxNodeId the max node id in the graph
  * @param nodeCount the number of nodes in the graph
  * @param edgeCount the number of edges in the graph
- * @param storedGraphDir the graph direction(s) stored
  */
-class WeightedGraph private (
+final class WeightedGraph private (
     nodes: Array[WeightedNode],
-    maxId: Int,
-    val nodeWithOutEdgesMaxId: Int,
-    val nodeWithOutEdgesCount: Int,
-    val nodeCount: Int,
-    val edgeCount: Long,
-    val storedGraphDir: StoredGraphDir)
+    _maxNodeId: Int,
+    override val nodeCount: Int,
+    override val edgeCount: Long)
   extends DirectedGraph
   with Iterable[WeightedNode] {
 
-  override lazy val maxNodeId = maxId
+  override lazy val maxNodeId = _maxNodeId
+  override val storedGraphDir = StoredGraphDir.OnlyOut
 
   def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
 
