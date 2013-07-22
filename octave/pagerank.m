@@ -180,6 +180,22 @@ with_dangle = [
     0.0 0.0 0.5 1.0 0.0 ;
   ];
 
+weightless_without_dangle = [
+    0.0 0.0 0.0 0.0 1.0 ;
+    1.0 0.0 0.0 0.0 0.0 ;
+    1.0 0.0 0.0 0.0 0.0 ;
+    0.0 1.0 1.0 0.0 0.0 ;
+    0.0 0.0 1.0 1.0 0.0 ;
+  ];
+
+weightless_with_dangle = [
+    0.0 0.0 0.0 0.0 0.0 ; % dangling
+    1.0 0.0 0.0 0.0 0.0 ;
+    1.0 0.0 0.0 0.0 0.0 ;
+    0.0 1.0 1.0 0.0 0.0 ;
+    0.0 0.0 1.0 1.0 0.0 ;
+  ];
+
 [v, num_iters] = naive_pagerank                (without_dangle, 0.15, 0.001, 100)
 [v, num_iters] = dangling_pagerank             (without_dangle, 0.15, 0.001, 100)
 [v, num_iters] = dangling_selfless_pagerank    (without_dangle, 0.15, 0.001, 100)
