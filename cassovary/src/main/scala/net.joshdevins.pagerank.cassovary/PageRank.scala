@@ -4,9 +4,12 @@ import com.twitter.cassovary.graph.{DirectedGraph, GraphDir, Node}
 import com.twitter.cassovary.util.Progress
 import net.lag.logging.Logger
 
+import net.joshdevins.pagerank.cassovary.graph.WeightedGraph
+import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
+
 import PageRank._
 
-final class PageRank(graph: DirectedGraph, params: PageRankParams) {
+final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
   private val log = Logger.get("PageRank")
 
@@ -63,9 +66,8 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
     log.info("Calculate PageRank on nodes")
     val calcProgress = buildProgress("iter_calc")
     graph.foreach { node =>
-      val givenPageRank = beforeIterationValues(node.id) / node.neighborCount(GraphDir.OutDir)
-      node.neighborIds(GraphDir.OutDir).foreach { neighborId =>
-        afterIterationValues(neighborId) += givenPageRank
+      node.edges(GraphDir.OutDir).foreach { case(id, weight) =>
+        afterIterationValues(id) += beforeIterationValues(node.id) * weight // assumes weights are already normalized
       }
 
       calcProgress.inc
@@ -89,6 +91,8 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
       graph.foreach { node =>
         if (!isDanglingNode(node))
           afterIterationValues(node.id) += perNodeRemainingMass
+
+        danglingProgress.inc
       }
     }
 
@@ -112,12 +116,12 @@ final object PageRank {
     * proportional to the graph's maxId - you might want to re-number the
     * graph before running PageRank.
     *
-    * @param graph A {@link DirectedGraph} instance
-    * @param params {@link PageRankParams}
+    * @param graph A [[WeightedGraph]] instance
+    * @param params [[PageRankParams]]
     *
     * @return An array of doubles, with indices corresponding to node ids
     */
-  def apply(graph: DirectedGraph, params: PageRankParams): Array[Double] = {
+  def apply(graph: WeightedGraph, params: PageRankParams): Array[Double] = {
     new PageRank(graph, params).run
   }
 
