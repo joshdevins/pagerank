@@ -85,9 +85,10 @@ final class PageRank(graph: DirectedGraph, params: PageRankParams) {
     val danglingProgress = buildProgress("iter_dangle")
     if (numDanglingNodes > 0) {
       val remainingMass = 1.0 - afterIterationValues.sum
-      val perNodeRemainingMass = remainingMass / graph.nodeCount
+      val perNodeRemainingMass = remainingMass / (graph.nodeCount - numDanglingNodes)
       graph.foreach { node =>
-        afterIterationValues(node.id) += perNodeRemainingMass
+        if (!isDanglingNode(node))
+          afterIterationValues(node.id) += perNodeRemainingMass
       }
     }
 

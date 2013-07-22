@@ -55,11 +55,11 @@ class PageRankTest extends FunSuite with ShouldMatchers {
 
     // verified against Octave/Matlab implementation
     // TODO: show work by hand
-    actual(0) should be (0.416 plusOrMinus tolerance)
-    actual(1) should be (0.146 plusOrMinus tolerance)
-    actual(2) should be (0.236 plusOrMinus tolerance)
-    actual(3) should be (0.146 plusOrMinus tolerance)
-    actual(4) should be (0.056 plusOrMinus tolerance)
+    actual(0) should be (0.380 plusOrMinus tolerance)
+    actual(1) should be (0.155 plusOrMinus tolerance)
+    actual(2) should be (0.245 plusOrMinus tolerance)
+    actual(3) should be (0.155 plusOrMinus tolerance)
+    actual(4) should be (0.065 plusOrMinus tolerance)
   }
 
   test("values sum to 1 after n iterations") {
