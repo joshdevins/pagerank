@@ -4,28 +4,28 @@ import com.twitter.cassovary.graph.{DirectedGraph, StoredGraphDir, TestGraphs}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import net.joshdevins.pagerank.cassovary.graph.{WeightedGraph, NodeIdEdgesWeightsMaxId}
+import net.joshdevins.pagerank.cassovary.graph.WeightedGraph
 import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
 
 class PageRankTest extends FunSuite with ShouldMatchers {
 
   val tolerance = 1.0E-10
 
-  val graphWithoutDangle = WeightedGraph(() => Seq(
-      NodeIdEdgesWeightsMaxId(0, Array(4),    Array(1.0)),
-      NodeIdEdgesWeightsMaxId(1, Array(0),    Array(1.0)),
-      NodeIdEdgesWeightsMaxId(2, Array(0),    Array(1.0)),
-      NodeIdEdgesWeightsMaxId(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
-      NodeIdEdgesWeightsMaxId(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
-    ).iterator)
+  val graphWithoutDangle = WeightedGraph(Array(
+      WeightedNode(0, Array(4),    Array(1.0)),
+      WeightedNode(1, Array(0),    Array(1.0)),
+      WeightedNode(2, Array(0),    Array(1.0)),
+      WeightedNode(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
+      WeightedNode(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
+    ))
 
-  val graphWithDangle = WeightedGraph(() => Seq(
-      NodeIdEdgesWeightsMaxId(0, Array(),     Array()), // dangling
-      NodeIdEdgesWeightsMaxId(1, Array(0),    Array(1.0)),
-      NodeIdEdgesWeightsMaxId(2, Array(0),    Array(1.0)),
-      NodeIdEdgesWeightsMaxId(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
-      NodeIdEdgesWeightsMaxId(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
-    ).iterator)
+  val graphWithDangle = WeightedGraph(Array(
+      WeightedNode(0, Array(),     Array()),    // dangling
+      WeightedNode(1, Array(0),    Array(1.0)),
+      WeightedNode(2, Array(0),    Array(1.0)),
+      WeightedNode(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
+      WeightedNode(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5))
+    ))
 
   test("returns a uniform array after 0 iterations") {
     val params = PageRankParams(0.9, 0)
@@ -85,12 +85,13 @@ class PageRankTest extends FunSuite with ShouldMatchers {
   test("for a complete graph, after 100 iterations, initial values are maintained") {
     // a complete graph is where each node follows every other node
     def generateCompleteGraph(numNodes: Int) = {
-      val allNodes = (1 to numNodes).toArray
+      val allNodes = (1 to numNodes)
       val testNodes = (1 to numNodes).toList.map { source =>
         val allBut = allNodes.filter(_ != source)
-        NodeIdEdgesWeightsMaxId(source, allBut, Array.fill[Double](numNodes - 1)(1.0 / (numNodes - 1)), numNodes)
+        WeightedNode(source, allBut.toArray, Array.fill[Double](numNodes - 1)(1.0 / (numNodes - 1)))
       }
-      WeightedGraph(() => testNodes.iterator)
+
+      WeightedGraph(testNodes)
     }
 
     val graphComplete = generateCompleteGraph(10)

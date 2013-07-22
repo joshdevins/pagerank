@@ -3,7 +3,7 @@ package net.joshdevins.pagerank.cassovary.graph.node
 import com.twitter.cassovary.graph.{Node, GraphDir}
 import com.twitter.cassovary.graph.GraphDir._
 
-final case class WeightedNode(val id: Int, neighbors: Array[Int], weights: Array[Double]) extends Node {
+final case class WeightedNode(val id: Int, val neighbors: Array[Int], val weights: Array[Double]) extends Node {
 
   require(neighbors.size == weights.size, "There should be an equal number of neighbors and weights")
 
