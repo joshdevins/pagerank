@@ -98,7 +98,7 @@ final object WeightedGraphReader {
   /** Reads a partial graph from a single file. Note that this is not currently
     * robust to corrupt files in any way. This always assumes no blank lines and
     * exactly the number of out edges that are said to be there by the row
-    * header.
+    * header. This also assumes exactly one space as a separator and no padding.
     */
   def readPartFile(file: File): PartialGraph = {
     val lines = Source.fromFile(file).getLines
@@ -108,10 +108,18 @@ final object WeightedGraphReader {
     def conditionallyUpdateMaxId(id: Int): Unit =
       maxId = maxId.max(id)
 
+    def split(line: String): (String, String) = {
+      val spaceIndex = line.indexOf(" ")
+      val first = line.substring(0, spaceIndex)
+      val second = line.substring(spaceIndex + 1, line.length)
+
+      (first, second)
+    }
+
     def readNextNode: WeightedNode = {
-      val Array(rowString, numOutEdgesString) = lines.next.trim.split(" ")
-      val row = rowString.toInt
-      val numOutEdges = numOutEdgesString.toInt
+      val (rowStr, numOutEdgesStr) = split(lines.next)
+      val row = rowStr.toInt
+      val numOutEdges = numOutEdgesStr.toInt
 
       numEdges += numOutEdges
       conditionallyUpdateMaxId(row)
@@ -121,7 +129,7 @@ final object WeightedGraphReader {
 
       var i = 0
       while (i < numOutEdges) {
-        val Array(columnStr, valueStr) = lines.next.trim.split(" ")
+        val (columnStr, valueStr) = split(lines.next)
         val column = columnStr.toInt
         val value = valueStr.toDouble
 
