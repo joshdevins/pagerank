@@ -4,8 +4,7 @@ import java.util.concurrent.Executors
 
 import com.twitter.cassovary.util.io.AdjacencyListGraphReader
 
-// very fast and easily loads 15M nodes, 250M edges, does not support edge weights
-object PageRankRunner extends App {
+final object PageRankRunner extends App {
 
   println("\nLoading graph")
   var startTime = System.currentTimeMillis

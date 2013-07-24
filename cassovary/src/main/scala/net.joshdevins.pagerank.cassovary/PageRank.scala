@@ -27,11 +27,6 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
   log.info("number of dangling nodes: " + numDanglingNodes)
 
   def run: Array[Double] = {
-
-    // let the user know if they can save memory
-    if (graph.maxNodeId.toDouble / graph.nodeCount > 1.1 && graph.maxNodeId - graph.nodeCount > 1000000)
-      log.info("Warning - you may be able to reduce the memory usage of PageRank by renumbering this graph!")
-
     var values = new Array[Double](graph.maxNodeId + 1)
 
     // initialize PageRank to some "random" values
@@ -66,7 +61,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     log.info("Calculate PageRank on nodes")
     val calcProgress = buildProgress("iter_calc")
     graph.foreach { node =>
-      node.edges(GraphDir.OutDir).foreach { case(id, weight) =>
+      node.edges.foreach { case(id, weight) =>
         afterIterationValues(id) += beforeIterationValues(node.id) * weight // assumes weights are already normalized
       }
 

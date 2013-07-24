@@ -16,11 +16,11 @@ import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
 final class WeightedGraph(
     nodes: Array[WeightedNode],
     _maxNodeId: Int,
-    override val nodeCount: Int,
     override val edgeCount: Long)
   extends DirectedGraph
   with Iterable[WeightedNode] {
 
+  override val nodeCount = nodes.size
   override lazy val maxNodeId = _maxNodeId
   override val storedGraphDir = StoredGraphDir.OnlyOut
 
@@ -37,7 +37,7 @@ final class WeightedGraph(
 
 final object WeightedGraph {
 
-  /** Note that this is a very inefficient means to calculate this but is
+  /** Note that this is a very inefficient means to calculate statistics but is
     * effective for small datasets like tests.
     */
   def apply(nodes: Seq[WeightedNode]): WeightedGraph = {
@@ -51,6 +51,6 @@ final object WeightedGraph {
       numEdges += node.neighbors.size
     }
 
-    new WeightedGraph(nodes.toArray, nodeIds.max, nodeIds.size, numEdges)
+    new WeightedGraph(nodes.toArray, nodeIds.max, numEdges)
   }
 }

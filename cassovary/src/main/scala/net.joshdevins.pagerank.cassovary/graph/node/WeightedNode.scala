@@ -10,10 +10,7 @@ final case class WeightedNode(val id: Int, val neighbors: Array[Int], val weight
   def inboundNodes = Nil
   def outboundNodes = neighbors
 
-  def edges(dir: GraphDir): Seq[(Int, Double)] = dir match {
-    case GraphDir.OutDir => outboundNodes.zip(weights)
-    case GraphDir.InDir => inboundNodes.zip(weights)
-  }
+  def edges: Seq[(Int, Double)] = neighbors.zip(weights)
 }
 
 final object WeightedNode {
