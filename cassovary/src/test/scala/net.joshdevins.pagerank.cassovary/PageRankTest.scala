@@ -4,10 +4,9 @@ import com.twitter.cassovary.graph.{DirectedGraph, StoredGraphDir, TestGraphs}
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import net.joshdevins.pagerank.cassovary.graph.WeightedGraph
-import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
-
-class PageRankTest extends FunSuite with ShouldMatchers {
+class PageRankTest
+  extends FunSuite
+  with ShouldMatchers {
 
   val tolerance = 1.0E-10
 

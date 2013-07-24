@@ -4,9 +4,6 @@ import com.twitter.cassovary.graph.{DirectedGraph, GraphDir, Node}
 import com.twitter.cassovary.util.Progress
 import net.lag.logging.Logger
 
-import net.joshdevins.pagerank.cassovary.graph.WeightedGraph
-import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
-
 import PageRank._
 
 final class PageRank(graph: WeightedGraph, params: PageRankParams) {

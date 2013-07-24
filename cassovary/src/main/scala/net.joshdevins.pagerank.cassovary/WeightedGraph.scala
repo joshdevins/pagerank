@@ -1,33 +1,31 @@
-package net.joshdevins.pagerank.cassovary.graph
+package net.joshdevins.pagerank.cassovary
 
 import com.twitter.cassovary.graph.{DirectedGraph, StoredGraphDir}
 import com.twitter.cassovary.graph.StoredGraphDir._
-
-import net.joshdevins.pagerank.cassovary.graph.node.WeightedNode
 
 /** This class is an implementation of the directed graph trait that is backed
   * by an array.
   *
   * @param nodes the list of nodes with edges instantiated
   * @param _maxNodeId the max node id in the graph
-  * @param nodeCount the number of nodes in the graph
   * @param edgeCount the number of edges in the graph
   */
 final class WeightedGraph(
     nodes: Array[WeightedNode],
     _maxNodeId: Int,
+    _nodeCount: Int,
     override val edgeCount: Long)
   extends DirectedGraph
   with Iterable[WeightedNode] {
 
-  override val nodeCount = nodes.size
   override lazy val maxNodeId = _maxNodeId
   override val storedGraphDir = StoredGraphDir.OnlyOut
+  override def nodeCount = _nodeCount
 
   def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
 
   def getNodeById(id: Int): Option[WeightedNode] = {
-    if (0 <= id && id >= nodes.size) return None
+    if (id < 0 || id >= nodes.size) return None
 
     val node = nodes(id)
     if (node == null) None
@@ -42,15 +40,18 @@ final object WeightedGraph {
     */
   def apply(nodes: Seq[WeightedNode]): WeightedGraph = {
     val nodeIds =
-      nodes.flatMap { node =>
-        Seq(node.id) ++ node.neighbors
-      }.distinct
+      nodes.
+        filter(_ != null).
+        flatMap { node =>
+          Seq(node.id) ++ node.neighbors
+        }.
+        distinct
 
     var numEdges = 0l
-    nodes.foreach { node =>
-      numEdges += node.neighbors.size
-    }
+    nodes.
+      filter(_ != null).
+      foreach(numEdges += _.neighbors.size)
 
-    new WeightedGraph(nodes.toArray, nodeIds.max, numEdges)
+    new WeightedGraph(nodes.toArray, nodeIds.max, nodeIds.size, numEdges)
   }
 }
