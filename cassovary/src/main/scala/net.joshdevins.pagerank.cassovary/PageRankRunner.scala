@@ -9,9 +9,7 @@ final object PageRankRunner extends App {
   println("\nLoading graph")
   var startTime = System.currentTimeMillis
 
-  val graph = new AdjacencyListGraphReader(args(0), args(1)) {
-    override val executorService = Executors.newFixedThreadPool(2)
-  }.toArrayBasedDirectedGraph()
+  val graph = WeightedGraphReader(args(0), Some("part-"))
 
   println("Graph loaded:")
   printf("\ttook: %s\n", System.currentTimeMillis - startTime)
