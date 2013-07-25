@@ -43,7 +43,6 @@ class PageRankTest
 
     // verified against Octave/Matlab implementation
     // TODO: show work by hand
-    println("tolerance: " + tolerance)
     actual(0) should be (0.38 plusOrMinus tolerance)
     actual(1) should be (0.14 plusOrMinus tolerance)
     actual(2) should be (0.14 plusOrMinus tolerance)

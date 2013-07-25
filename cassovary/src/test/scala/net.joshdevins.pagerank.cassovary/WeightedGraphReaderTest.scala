@@ -55,7 +55,6 @@ final class WeightedGraphReaderTest
     val allNodes = addDanglingNodes(nodes)
     val danglingNodes = Seq(WeightedNode(0))
 
-    println(allNodes.map(_.id))
     allNodes.size should be (nodes.size + 1)
     allNodes should be (nodes ++ danglingNodes)
   }
