@@ -23,8 +23,7 @@ final object PageRankRunner extends App {
   println("Running PageRank")
   startTime = System.currentTimeMillis
 
-  // val results = PageRank(graph, new PageRankParams(0.15, 30))
-  // store results, compare to other methods
+  val results = PageRank(graph, new PageRankParams(0.15, 30))
 
   println("PageRank run:")
   printf("\ttook: %s\n", System.currentTimeMillis - startTime)
