@@ -11,13 +11,14 @@ import com.twitter.cassovary.graph.StoredGraphDir._
   * @param edgeCount the number of edges in the graph
   */
 final class WeightedGraph(
-    nodes: Array[WeightedNode],
+    _nodes: Array[WeightedNode],
     _maxNodeId: Int,
     _nodeCount: Int,
     override val edgeCount: Long)
   extends DirectedGraph
   with Iterable[WeightedNode] {
 
+  def nodes = _nodes // seems to prevent IllegalAccessExceptions...very strange
   override lazy val maxNodeId = _maxNodeId
   override val storedGraphDir = StoredGraphDir.OnlyOut
   override val nodeCount = _nodeCount
