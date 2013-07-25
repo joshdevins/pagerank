@@ -14,12 +14,12 @@ final class WeightedGraphReaderTest
   val nodesInParts = Map(
     // 0 is a dangling node and should be added after the fact
     1 -> Seq(
-      WeightedNode(1, Array(0), Array(0.5))),
+      WeightedNode(1, Array(0), Array(0.5 / 0.5))),
     2 -> Seq(
-      WeightedNode(2, Array(0), Array(0.5))),
+      WeightedNode(2, Array(0), Array(0.5 / 0.5))),
     3 -> Seq(
-      WeightedNode(3, Array(1, 2), Array(1.0, 0.5)),
-      WeightedNode(4, Array(2, 3), Array(0.5, 1.0)))
+      WeightedNode(3, Array(1, 2), Array(1.0 / 1.5, 0.5 / 1.5)),
+      WeightedNode(4, Array(2, 3), Array(0.5 / 1.5, 1.0 / 1.5)))
   )
 
   val nodes = nodesInParts.values.flatten.toSeq

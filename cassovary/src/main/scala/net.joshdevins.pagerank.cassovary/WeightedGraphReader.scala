@@ -120,6 +120,13 @@ final object WeightedGraphReader {
       (first, second)
     }
 
+    def normalize(weights: Array[Double]): Array[Double] = {
+      val sum = weights.sum
+      weights.map { v =>
+        v / sum
+      }
+    }
+
     def readNextNode: WeightedNode = {
       val (rowStr, numOutEdgesStr) = split(lines.next)
       val row = rowStr.toInt
@@ -145,7 +152,7 @@ final object WeightedGraphReader {
         i += 1
       }
 
-      WeightedNode(row, neighbors, weights)
+      WeightedNode(row, neighbors, normalize(weights))
     }
 
     val nodes = new mutable.ListBuffer[WeightedNode]()
