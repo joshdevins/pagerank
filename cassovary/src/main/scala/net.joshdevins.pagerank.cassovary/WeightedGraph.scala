@@ -29,7 +29,8 @@ final class WeightedGraph(
     */
   override def foreach[A](fn: (WeightedNode) => A): Unit = {
     var i = 0
-    while(i < nodes.size) {
+    val size = nodes.size
+    while(i < size) {
       val node = nodes(i)
       if (node != null) fn(node)
       i += 1
