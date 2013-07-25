@@ -20,9 +20,19 @@ final class WeightedGraph(
 
   override lazy val maxNodeId = _maxNodeId
   override val storedGraphDir = StoredGraphDir.OnlyOut
-  override def nodeCount = _nodeCount
+  override val nodeCount = _nodeCount
 
   def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
+
+  /** Provide more efficient means to iterate over the array.
+    */
+  override def foreach[A](fn: (WeightedNode) => A): Unit = {
+    var i = 0
+    while(i < nodes.size) {
+      fn(nodes(i))
+      i += 1
+    }
+  }
 
   def getNodeById(id: Int): Option[WeightedNode] = {
     if (id < 0 || id >= nodes.size) return None
