@@ -3,7 +3,6 @@ package net.joshdevins.pagerank.cassovary
 import java.io.File
 
 import scala.collection._
-import scala.io.Source
 
 import net.lag.logging.Logger
 
@@ -45,7 +44,7 @@ final object WeightedGraphReader {
     // get contents out of all files, in parallel, and merge results
     val fullGraph =
       filteredFiles.par.
-        map(readPartFile(_)).
+        map(readTextPartFile(_)).
         reduce { (left: PartialGraph, right: PartialGraph) =>
           PartialGraph(
             left.nodes ++ right.nodes,
@@ -95,12 +94,71 @@ final object WeightedGraphReader {
     nodes
   }
 
+  /** Reads a partial graph from a Hadoop sequence file. Key is the row and
+    * value is the binary encoded adjacency list of the format:
+    * `numOutEdges: int, [col: int, val: double]*`
+    */
+  def readBinaryPartFile(file: File): PartialGraph = {
+    import
+
+    val fs = new FileSystem(file.getUri)
+    val reader = new SequenceFile.Reader(fs, new Path(file.getUri), new Configuration)
+    var maxId = 0
+    var numEdges = 0l
+
+    def conditionallyUpdateMaxId(id: Int): Unit =
+      maxId = maxId.max(id)
+
+    def readNextNode(row: IntWritable, value: BytesWritable): WeightedNode = {
+      conditionallyUpdateMaxId(row.get)
+
+      val bais = new ByteArrayInputStream(value.get)
+      val data = new DataInputStream(bais)
+
+      try {
+        val length = data.readInt
+        numEdges += length
+
+        val neighbors = new Array[Int](length)
+        val weights = new Array[Double](length)
+        var i = 0
+        while(i < length) {
+          neighbors(i) = data.readInt
+          weights(i) = data.readDouble
+
+          conditionallyUpdateMaxId(neighbors(i))
+          i += 1
+        }
+
+        WeightedNode(row.get, neighbors, weights)
+      } finally {
+        IOUtils.closeQuietly(bais)
+        IOUtils.closeQuietly(data)
+      }
+    }
+
+    val nodes = new mutable.ListBuffer[WeightedNode]()
+    try {
+      val row = new IntWritable
+      val value = new BytesWritable
+      while (reader.next(row, value)) {
+        nodes += readNextNode(key, value)
+      }
+    } finally {
+      IOUtils.closeQuietly(reader)
+    }
+
+    PartialGraph(nodes, maxId, numEdges)
+  }
+
   /** Reads a partial graph from a single file. Note that this is not currently
     * robust to corrupt files in any way. This always assumes no blank lines and
     * exactly the number of out edges that are said to be there by the row
     * header. This also assumes exactly one space as a separator and no padding.
     */
-  def readPartFile(file: File): PartialGraph = {
+  def readTextPartFile(file: File): PartialGraph = {
+    import scala.io.Source
+
     val lines = Source.fromFile(file).getLines
     var maxId = 0
     var numEdges = 0l
