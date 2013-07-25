@@ -95,7 +95,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     node.neighborCount(GraphDir.OutDir) == 0
 
   private def buildProgress(name: String): Progress =
-    Progress("pagerank_" + name, 1000, Some(graph.nodeCount))
+    Progress("pagerank_" + name, 100, Some(graph.nodeCount))
 }
 
 /** A naive PageRank implementation. Not optimized and runs in a single thread.
