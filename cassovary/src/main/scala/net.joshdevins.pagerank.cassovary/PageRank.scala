@@ -132,5 +132,5 @@ final object PageRank {
   * @param numIterations How many iterations do you want?
   */
 final case class PageRankParams(
-  alpha: Double = 0.85,
+  alpha: Double = 0.15,
   numIterations: Int = 10)
