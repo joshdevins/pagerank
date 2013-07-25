@@ -22,14 +22,16 @@ final class WeightedGraph(
   override val storedGraphDir = StoredGraphDir.OnlyOut
   override val nodeCount = _nodeCount
 
-  def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
+  override def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
 
-  /** Provide more efficient means to iterate over the array.
+  /** Provide more efficient means to iterate over the array and skip
+    * nulls/gaps where no node exists.
     */
   override def foreach[A](fn: (WeightedNode) => A): Unit = {
     var i = 0
     while(i < nodes.size) {
-      fn(nodes(i))
+      val node = nodes(i)
+      if (node != null) fn(node)
       i += 1
     }
   }

@@ -1,5 +1,7 @@
 package net.joshdevins.pagerank.cassovary
 
+import scala.collection._
+
 import com.twitter.cassovary.graph.StoredGraphDir
 import com.twitter.cassovary.graph.StoredGraphDir._
 import org.scalatest.FunSuite
@@ -41,5 +43,15 @@ final class WeightedGraphTest
     graph.maxNodeId should be (2)
     graph.nodeCount should be (3)
     graph.edgeCount should be (4)
+  }
+
+  test("custom foreach") {
+    val graph = WeightedGraph(nodes)
+    val collectedNodes = mutable.ListBuffer[WeightedNode]()
+    graph.foreach {
+      collectedNodes += _
+    }
+
+    collectedNodes.sorted should be (nodes.dropRight(1).sorted.toList)
   }
 }
