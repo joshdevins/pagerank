@@ -55,36 +55,27 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     // values after this iteration completes
     val afterIterationValues = new Array[Double](graph.maxNodeId + 1)
 
-    log.info("Calculate PageRank on nodes")
-    val calcProgress = buildProgress("iter_calc")
+    log.info("Distribute node mass")
     graph.foreach { node =>
       node.edges.foreach { case(id, weight) =>
         afterIterationValues(id) += beforeIterationValues(node.id) * weight // assumes weights are already normalized
       }
-
-      calcProgress.inc
     }
 
     log.info("Apply teleport probability")
-    val teleportProgress = buildProgress("iter_teleport")
     if (params.alpha > 0.0) {
       graph.foreach { node =>
         afterIterationValues(node.id) = perNodeAlpha + ((1.0 - params.alpha) * afterIterationValues(node.id))
-
-        teleportProgress.inc
       }
     }
 
     log.info("Distribute dangling node mass")
-    val danglingProgress = buildProgress("iter_dangle")
     if (numDanglingNodes > 0) {
       val remainingMass = 1.0 - afterIterationValues.sum
       val perNodeRemainingMass = remainingMass / (graph.nodeCount - numDanglingNodes)
       graph.foreach { node =>
         if (!isDanglingNode(node))
           afterIterationValues(node.id) += perNodeRemainingMass
-
-        danglingProgress.inc
       }
     }
 
