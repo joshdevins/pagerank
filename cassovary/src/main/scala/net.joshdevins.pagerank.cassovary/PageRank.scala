@@ -35,7 +35,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     }
 
     // begin iterating until n (no delta checking yet)
-    (0 until params.numIterations).foreach { i =>
+    (1 to params.numIterations).foreach { i =>
       log.info("iteration %s".format(i))
       values = iterate(values)
     }
