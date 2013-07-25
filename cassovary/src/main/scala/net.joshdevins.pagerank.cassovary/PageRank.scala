@@ -27,13 +27,11 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     var values = new Array[Double](graph.maxNodeId + 1)
 
     // initialize PageRank to some "random" values
-    log.info("Initializing PageRank run")
-    val progress = buildProgress("init")
+    log.info("initializing PageRank run")
     val initialPageRankValue = 1.0d / graph.nodeCount
 
     graph.foreach { node =>
       values(node.id) = initialPageRankValue
-      progress.inc
     }
 
     // begin iterating until n (no delta checking yet)
@@ -55,21 +53,21 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     // values after this iteration completes
     val afterIterationValues = new Array[Double](graph.maxNodeId + 1)
 
-    log.info("Distribute node mass")
+    log.info("  distribute node mass")
     graph.foreach { node =>
       node.edges.foreach { case(id, weight) =>
         afterIterationValues(id) += beforeIterationValues(node.id) * weight // assumes weights are already normalized
       }
     }
 
-    log.info("Apply teleport probability")
+    log.info("  apply teleport probability")
     if (params.alpha > 0.0) {
       graph.foreach { node =>
         afterIterationValues(node.id) = perNodeAlpha + ((1.0 - params.alpha) * afterIterationValues(node.id))
       }
     }
 
-    log.info("Distribute dangling node mass")
+    log.info("  distribute dangling node mass")
     if (numDanglingNodes > 0) {
       val remainingMass = 1.0 - afterIterationValues.sum
       val perNodeRemainingMass = remainingMass / (graph.nodeCount - numDanglingNodes)
@@ -84,9 +82,6 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
   private def isDanglingNode(node: Node): Boolean =
     node.neighborCount(GraphDir.OutDir) == 0
-
-  private def buildProgress(name: String): Progress =
-    Progress("pagerank_" + name, 100, Some(graph.nodeCount))
 }
 
 /** A naive PageRank implementation. Not optimized and runs in a single thread.
