@@ -47,7 +47,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
   /** Memory cost: creates a new array for every iteration (easily garbage collectable)
     * Computation cost:
-    *  loops through all nodes twice (propogate/calculate PageRank, apply teleport probability)
+    *  loops through all nodes three times (propogate/calculate PageRank, apply teleport probability, distribute dangling node mass)
     *  loops through each neighbour node of every node, every iteration
     */
   def iterate(beforeIterationValues: Array[Double]): Array[Double] = {
@@ -95,7 +95,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     node.neighborCount(GraphDir.OutDir) == 0
 
   private def buildProgress(name: String): Progress =
-    Progress("pagerank_" + name, math.pow(2, 16).toInt, Some(graph.nodeCount))
+    Progress("pagerank_" + name, 1000, Some(graph.nodeCount))
 }
 
 /** A naive PageRank implementation. Not optimized and runs in a single thread.
