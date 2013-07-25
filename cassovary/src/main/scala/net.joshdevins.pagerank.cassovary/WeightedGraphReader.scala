@@ -11,6 +11,7 @@ final object WeightedGraphReader {
 
   private val Log = Logger.get("WeightedGraphReader")
 
+  //final case class Statistics(numNodes: Int, maxId: Int, numEdges: Long, danglingNodeIds: Set[Int])
   final case class PartialGraph(nodes: Seq[WeightedNode], maxId: Int, numEdges: Long)
 
   /** Reads in a multi-line adjacency list from multiple files in a directory.
@@ -95,10 +96,13 @@ final object WeightedGraphReader {
     nodes
   }
 
-  /** Reads a partial graph from a single file. Note that this is not currently
-    * robust to corrupt files in any way. This always assumes no blank lines and
-    * exactly the number of out edges that are said to be there by the row
-    * header. This also assumes exactly one space as a separator and no padding.
+  /** Reads a partial graph from a single file. This has a few properties to be
+    * aware of:
+    *
+    *  - this is currently not robust to corrupt files in any way
+    *  - this always assumes no blank lines and exactly the number of out edges
+    *    that are said to be there by the row header
+    *  - this assumes exactly one space as a separator and no padding
     */
   def readPartFile(file: File): PartialGraph = {
     val lines = Source.fromFile(file).getLines
