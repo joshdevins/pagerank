@@ -19,6 +19,16 @@ final case class WeightedNode(id: Int, neighbors: Array[Int], weights: Array[Dou
     */
   def edges: Seq[(Int, Double)] = neighbors.zip(weights)
 
+  /** Provide more efficient meants to iterate over the edges with weights.
+    */
+  def foreachEdge[A](fn: (Int, Double) => A): Unit = {
+    var i = 0
+    while(i < neighbors.size) {
+      fn(neighbors(i), weights(i))
+      i += 1
+    }
+  }
+
   /** Allow ordering by ID.
     */
   override def compare(other: WeightedNode): Int = this.id compare other.id

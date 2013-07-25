@@ -55,7 +55,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
     log.info("  distribute node mass")
     graph.foreach { node =>
-      node.edges.foreach { case(id, weight) =>
+      node.foreachEdge { (id, weight) =>
         afterIterationValues(id) += beforeIterationValues(node.id) * weight // assumes weights are already normalized
       }
     }

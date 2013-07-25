@@ -1,5 +1,7 @@
 package net.joshdevins.pagerank.cassovary
 
+import scala.collection._
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
@@ -27,6 +29,18 @@ final class WeightedNodeTest
     intercept[IllegalArgumentException] {
       WeightedNode(100, Array(1), Array.empty[Double])
     }
+  }
+
+  test("iterate over edges") {
+    var zipped = new mutable.ListBuffer[(Int, Double)]
+    val node = buildWeightedNode(100, 3)
+
+    node.foreachEdge { (neighbor, weight) =>
+      val pair = (neighbor, weight)
+      zipped += pair
+    }
+
+    zipped should be (node.edges)
   }
 
   test("equality") {
