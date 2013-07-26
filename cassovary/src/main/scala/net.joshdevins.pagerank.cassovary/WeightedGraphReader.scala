@@ -68,13 +68,18 @@ final object WeightedGraphReader {
     * Note that this performs all actions on parallel collections.
     */
   def addDanglingNodes(nodes: Seq[WeightedNode]): Seq[WeightedNode] = {
+    Log.info("  building existing node ID set")
     val existingNodeIds = nodes.par.map(_.id).toSet
+
+    Log.info("  building dangling node ID set")
     val danglingNodeIds = nodes.par.flatMap {
       _.neighbors.flatMap { neighbor =>
         if (!existingNodeIds.contains(neighbor)) Some(neighbor)
         else None
       }
     }.distinct
+
+    Log.info("  creating dangling nodes")
     val danglingNodes = danglingNodeIds.par.map(WeightedNode(_))
 
     nodes ++ danglingNodes
