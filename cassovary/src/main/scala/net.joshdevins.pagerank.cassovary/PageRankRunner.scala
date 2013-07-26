@@ -3,24 +3,25 @@ package net.joshdevins.pagerank.cassovary
 import java.util.concurrent.Executors
 
 import com.twitter.cassovary.util.io.AdjacencyListGraphReader
+import net.lag.logging.Logger
 
 final object PageRankRunner extends App {
 
-  println("\nLoading graph")
-  var startTime = System.currentTimeMillis
+  private val Log = Logger.get("PageRankRunner")
 
+  var startTime = System.currentTimeMillis
   val graph = WeightedGraphReader(args(0), Some("part-"))
 
-  println("Graph loaded:")
-  printf("\ttook: %s\n", System.currentTimeMillis - startTime)
-  printf("\tnodes: %s\n", graph.numNodes)
-  printf("\tdirected edges: %s\n", graph.numEdges)
+  Log.info("graph loaded:")
+  Log.info("\ttook: %s".format(System.currentTimeMillis - startTime))
+  Log.info("\tnodes: %s".format(graph.numNodes))
+  Log.info("\tdirected edges: %s".format(graph.numEdges))
 
-  println("Running PageRank")
+  Log.info("running PageRank")
   startTime = System.currentTimeMillis
 
   val results = PageRank(graph, new PageRankParams(0.15, 30))
 
-  println("PageRank run:")
-  printf("\ttook: %s\n", System.currentTimeMillis - startTime)
+  Log.info("PageRank run:")
+  Log.info("\ttook: %s".format(System.currentTimeMillis - startTime))
 }

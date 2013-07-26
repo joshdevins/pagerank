@@ -43,6 +43,7 @@ final object WeightedGraphReader {
       else files
 
     // get contents out of all files, in parallel, and merge results
+    Log.info("reading graph from part files")
     val fullGraph =
       filteredFiles.par.
         map(readPartFile(_)).
@@ -53,6 +54,7 @@ final object WeightedGraphReader {
             left.maxId max right.maxId)
         }
 
+    Log.info("adding dangling nodes")
     val nodes = addDanglingNodes(fullGraph.nodes)
 
     new WeightedGraph(nodes, nodes.size, fullGraph.numEdges, fullGraph.maxId)
