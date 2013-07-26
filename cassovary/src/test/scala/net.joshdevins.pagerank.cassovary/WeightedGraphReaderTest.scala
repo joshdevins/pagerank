@@ -27,28 +27,18 @@ final class WeightedGraphReaderTest
   test("read part files separately") {
     val partial1 = readPartFile(new File("src/test/resources/graph/part-00001"))
     partial1.nodes should be (nodesInParts(1))
-    partial1.maxId should be (1)
     partial1.numEdges should be (1)
+    partial1.maxId should be (1)
 
     val partial2 = readPartFile(new File("src/test/resources/graph/part-00002"))
     partial2.nodes should be (nodesInParts(2))
-    partial2.maxId should be (2)
     partial2.numEdges should be (1)
+    partial2.maxId should be (2)
 
     val partial3 = readPartFile(new File("src/test/resources/graph/part-00003"))
     partial3.nodes should be (nodesInParts(3))
-    partial3.maxId should be (4)
     partial3.numEdges should be (4)
-  }
-
-  test("convert sequence of nodes to indexed nodes") {
-    val indexedNodes = toIndexedNodes(nodes, 4)
-
-    indexedNodes.size should be (5)
-    indexedNodes(0) should be (null)
-    indexedNodes(1).id should be (1)
-    indexedNodes(4).id should be (4)
-    indexedNodes.filter(_ != null) should be (nodes.toArray)
+    partial3.maxId should be (4)
   }
 
   test("add dangling nodes") {
@@ -63,16 +53,16 @@ final class WeightedGraphReaderTest
     // should ignore the file called "ignore" which has actual edges in it
     val graph = WeightedGraphReader("src/test/resources/graph", Some("part-"))
 
-    graph.nodeCount should be (5)
-    graph.edgeCount should be (6)
+    graph.numNodes should be (5)
+    graph.numEdges should be (6)
     graph.iterator.toSeq.sorted should be (addDanglingNodes(nodes).toSeq.sorted)
   }
 
   test("read all files in a directory") {
     val graph = WeightedGraphReader("src/test/resources/graph")
 
-    graph.nodeCount should be (6)
-    graph.edgeCount should be (7)
+    graph.numNodes should be (6)
+    graph.numEdges should be (7)
 
     val newNodes = nodes ++ Seq(WeightedNode(100, Array(100), Array(1.0)))
     graph.iterator.toSeq.sorted should be (addDanglingNodes(newNodes).toSeq.sorted)

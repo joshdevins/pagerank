@@ -11,8 +11,7 @@ final object WeightedGraphReader {
 
   private val Log = Logger.get("WeightedGraphReader")
 
-  //final case class Statistics(numNodes: Int, maxId: Int, numEdges: Long, danglingNodeIds: Set[Int])
-  final case class PartialGraph(nodes: Seq[WeightedNode], maxId: Int, numEdges: Long)
+  final case class PartialGraph(nodes: Seq[WeightedNode], numEdges: Long, maxId: Int)
 
   /** Reads in a multi-line adjacency list from multiple files in a directory.
     * Does not check for duplicate edges or nodes. If there are multiple file
@@ -44,20 +43,21 @@ final object WeightedGraphReader {
       else files
 
     // get contents out of all files, in parallel, and merge results
+    Log.info("reading graph from part files")
     val fullGraph =
       filteredFiles.par.
         map(readPartFile(_)).
         reduce { (left: PartialGraph, right: PartialGraph) =>
           PartialGraph(
             left.nodes ++ right.nodes,
-            left.maxId max right.maxId,
-            left.numEdges + right.numEdges)
+            left.numEdges + right.numEdges,
+            left.maxId max right.maxId)
         }
 
-    val unindexedNodes = addDanglingNodes(fullGraph.nodes)
-    val indexedNodes = toIndexedNodes(unindexedNodes, fullGraph.maxId)
+    Log.info("adding dangling nodes")
+    val nodes = addDanglingNodes(fullGraph.nodes)
 
-    new WeightedGraph(indexedNodes, fullGraph.maxId, unindexedNodes.size, fullGraph.numEdges)
+    new WeightedGraph(nodes, nodes.size, fullGraph.numEdges, fullGraph.maxId)
   }
 
   /** Given a sequence of [[WeightedNode]]s, determine the dangling nodes (those
@@ -80,22 +80,6 @@ final object WeightedGraphReader {
     nodes ++ danglingNodes
   }
 
-  /** Given a sequence of unindexed [[WeightedNode]]s, create an indexed
-    * [[Array]] of [[WeightedNode]]s where the index in the [[Array]] is the
-    * same as the id of the [[WeightedNode]] that it addresses.
-    */
-  def toIndexedNodes(unindexedNodes: Seq[WeightedNode], maxId: Int): Array[WeightedNode] = {
-    // let the user know if they can save memory
-    if (maxId.toDouble / unindexedNodes.size > 1.1 && maxId - unindexedNodes.size > 1000000)
-      Log.info("WARNING: Renumbering this graph will save noticable amounts of memory usage")
-
-    val nodes = new Array[WeightedNode](maxId + 1)
-    unindexedNodes.par.foreach { n =>
-      nodes(n.id) = n
-    }
-    nodes
-  }
-
   /** Reads a partial graph from a single file. This has a few properties to be
     * aware of:
     *
@@ -106,8 +90,8 @@ final object WeightedGraphReader {
     */
   def readPartFile(file: File): PartialGraph = {
     val lines = Source.fromFile(file).getLines
-    var maxId = 0
     var numEdges = 0l
+    var maxId = 0
 
     def conditionallyUpdateMaxId(id: Int): Unit =
       maxId = maxId.max(id)
@@ -160,6 +144,6 @@ final object WeightedGraphReader {
       nodes += readNextNode
     }
 
-    PartialGraph(nodes, maxId, numEdges)
+    PartialGraph(nodes, numEdges, maxId)
   }
 }
