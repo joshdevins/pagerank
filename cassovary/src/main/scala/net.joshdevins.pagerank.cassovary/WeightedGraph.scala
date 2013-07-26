@@ -1,49 +1,27 @@
 package net.joshdevins.pagerank.cassovary
 
-import com.twitter.cassovary.graph.{DirectedGraph, StoredGraphDir}
-import com.twitter.cassovary.graph.StoredGraphDir._
+import com.twitter.cassovary.graph.{Graph, Node}
 
 /** This class is an implementation of the directed graph trait that is backed
-  * by an array.
-  *
-  * @param nodes the list of nodes with edges instantiated
-  * @param _maxNodeId the max node id in the graph
-  * @param edgeCount the number of edges in the graph
+  * by an iterable. Note that the iterable should be dense, containing no empty
+  * values or nulls.
   */
 final class WeightedGraph(
-    _nodes: Array[WeightedNode],
-    _maxNodeId: Int,
-    _nodeCount: Int,
-    override val edgeCount: Long)
-  extends DirectedGraph
+    nodes: Iterable[WeightedNode],
+    val numNodes: Int,
+    val numEdges: Long,
+    val maxNodeId: Int)
+  extends Graph
   with Iterable[WeightedNode] {
 
-  def nodes = _nodes // seems to prevent IllegalAccessExceptions...very strange
-  override lazy val maxNodeId = _maxNodeId
-  override val storedGraphDir = StoredGraphDir.OnlyOut
-  override val nodeCount = _nodeCount
+  override def iterator: Iterator[WeightedNode] = nodes.iterator
 
-  override def iterator: Iterator[WeightedNode] = nodes.iterator.filter { _ != null }
-
-  /** Provide more efficient means to iterate over the array and skip
-    * nulls/gaps where no node exists.
+  /** Note that this is highly inefficient and should be avoided.
     */
-  override def foreach[A](fn: (WeightedNode) => A): Unit = {
-    var i = 0
-    val size = nodes.size
-    while(i < size) {
-      val node = nodes(i)
-      if (node != null) fn(node)
-      i += 1
+  override def getNodeById(id: Int): Option[WeightedNode] = {
+    nodes.find { node =>
+      node.id == id
     }
-  }
-
-  def getNodeById(id: Int): Option[WeightedNode] = {
-    if (id < 0 || id >= nodes.size) return None
-
-    val node = nodes(id)
-    if (node == null) None
-    else Some(node)
   }
 }
 
@@ -66,6 +44,6 @@ final object WeightedGraph {
       filter(_ != null).
       foreach(numEdges += _.neighbors.size)
 
-    new WeightedGraph(nodes.toArray, nodeIds.max, nodeIds.size, numEdges)
+    new WeightedGraph(nodes, nodes.size, numEdges, nodeIds.max)
   }
 }

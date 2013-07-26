@@ -10,7 +10,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
   private val log = Logger.get("PageRank")
 
-  val perNodeAlpha = params.alpha / graph.nodeCount // assumes a uniform prior
+  val perNodeAlpha = params.alpha / graph.numNodes // assumes a uniform prior
   val numDanglingNodes = {
     // count number of dangling nodes in the graph (no out edges)
     var count = 0
@@ -20,7 +20,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     }
     count
   }
-  log.info("number of nodes: " + graph.nodeCount)
+  log.info("number of nodes: " + graph.numNodes)
   log.info("number of dangling nodes: " + numDanglingNodes)
 
   def run: Array[Double] = {
@@ -28,7 +28,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
 
     // initialize PageRank to some "random" values
     log.info("initializing PageRank run")
-    val initialPageRankValue = 1.0d / graph.nodeCount
+    val initialPageRankValue = 1.0d / graph.numNodes
 
     graph.foreach { node =>
       values(node.id) = initialPageRankValue
@@ -70,7 +70,7 @@ final class PageRank(graph: WeightedGraph, params: PageRankParams) {
     log.info("  distribute dangling node mass")
     if (numDanglingNodes > 0) {
       val remainingMass = 1.0 - afterIterationValues.sum
-      val perNodeRemainingMass = remainingMass / (graph.nodeCount - numDanglingNodes)
+      val perNodeRemainingMass = remainingMass / (graph.numNodes - numDanglingNodes)
       graph.foreach { node =>
         if (!isDanglingNode(node))
           afterIterationValues(node.id) += perNodeRemainingMass
